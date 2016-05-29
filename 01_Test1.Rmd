@@ -1,0 +1,97 @@
+---
+title: "Alzheimer"
+author: "Sander Tan"
+date: "29 mei 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Diagnostic groups
+
+1. FTD
+2. Mogelijk FTD
+3. Anders neurologisch
+4. Psychiatrisch
+5. Anders
+
+```{r}
+library(rpart)
+library(readxl)
+library(ggplot2)
+# Load in the packages to create a fancified version of your tree
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+
+colors <- brewer.pal(4, "Set1")
+
+data_inp <- read_excel("C:/Users/tansa/Desktop/dataset2.xlsx")
+colnames(data_inp)[1] <- "Sex"
+data_inp$Diagnosticgroups <- as.factor(data_inp$Diagnosticgroups)
+data_inp$Diagnosticgroups <- as.factor(c("FTD", "Mogelijk FTD", "Anders_Neuro", "Psychiatrisch", "Anders")[data_inp$Diagnosticgroups])
+data_inp$Sex <- as.factor(data_inp$Sex)
+data_inp$Sex <- as.factor(c("Man", "Vrouw")[data_inp$Sex])
+data_inp$age_Dx_T0 <- round(data_inp$age_Dx_T0)
+
+### Remove mogelijk ftd
+data_inp <- data_inp[data_inp$Diagnosticgroups %in% c("FTD", "Anders_Neuro", "Psychiatrisch", "Anders"),]
+data_inp <- droplevels(data_inp)
+
+### Look at ages
+ggplot(data_inp, aes(x = Diagnosticgroups, y = age_Dx_T0, group = Diagnosticgroups, fill = Diagnosticgroups)) + geom_boxplot() +  scale_fill_manual(values=colors)
+```
+
+## Create training en test set
+
+```{r}
+smp_size <- floor(0.75 * nrow(data_inp))
+
+set.seed(12)
+train_ind <- sample(seq_len(nrow(data_inp)), size = smp_size)
+
+train <- data_inp[train_ind, ]
+test <- data_inp[-train_ind, ]
+
+ggplot(train, aes(Diagnosticgroups, fill = Diagnosticgroups)) + geom_bar() + ggtitle("Training set") + scale_y_continuous(breaks=seq(0,100,2))+  scale_fill_manual(values=colors)
+ggplot(test, aes(Diagnosticgroups, fill = Diagnosticgroups)) + geom_bar() + ggtitle("Test set") + scale_y_continuous(breaks=seq(1,100,2))+  scale_fill_manual(values=colors)
+```
+
+## Build tree with random forest
+
+```{r}
+# Build the decision tree
+my_tree <- rpart(formula = Diagnosticgroups ~ 
+                   Sex +
+                   age_Dx_T0 +
+                   Education_Verhage +
+                   # MMSE +
+                   # FAB +
+                   # SRI_tot_baseline +
+                   # FBI_tot_baseline +
+                   # EkmAnger +
+                   # EkmDisgust +
+                   # EkmFear +
+                   # EkmHappy +
+                   # EkmSad +
+                   # EkmSurpris +
+                   EkmTotal +
+                   # FauxpasGoed +
+                   # nonFauxGoed +
+                   # EmpathieGoed +
+                   FauxpasTotaal,
+                 data = train, method = "class")
+
+# Time to plot your fancy tree
+fancyRpartPlot(my_tree)
+```
+
+```{r}
+# Predict
+#prediction <- cbind(test$Diagnosticgroups, predict(my_tree, test, type = "class"))
+
+```
+
+

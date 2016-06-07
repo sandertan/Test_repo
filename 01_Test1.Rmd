@@ -77,11 +77,11 @@ my_tree <- rpart(formula = Diagnosticgroups ~
                    # EkmHappy +
                    # EkmSad +
                    # EkmSurpris +
-                   EkmTotal +
+                   EkmTotal,# +
                    # FauxpasGoed +
                    # nonFauxGoed +
                    # EmpathieGoed +
-                   FauxpasTotaal,
+                   #FauxpasTotaal,
                  data = train, method = "class")
 
 # Time to plot your fancy tree
